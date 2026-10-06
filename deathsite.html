@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Death Site</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: rgba(22, 22, 24, 0.75);
+      --border: rgba(255, 255, 255, 0.12);
+      --accent-red: #ff453a;
+      --accent-red-hover: #ff6961;
+      --text-main: #f5f5f7;
+      --text-sub: #86868b;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Фоновый туманный градиент Apple style */
+    .bg-glow {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,69,58,0.15) 0%, rgba(0,0,0,0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 28px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--accent-red);
+      background: rgba(255, 69, 58, 0.1);
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid rgba(255, 69, 58, 0.2);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.4;
+    }
+
+    /* Правила протокола */
+    .rules-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    .rules-card strong {
+      color: var(--text-main);
+    }
+
+    /* Форма ввода */
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 16px;
+      color: #fff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-red);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 4px rgba(255, 69, 58, 0.15);
+    }
+
+    button.btn-primary {
+      width: 100%;
+      background: var(--accent-red);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button.btn-primary:hover {
+      background: var(--accent-red-hover);
+      transform: scale(0.99);
+    }
+
+    /* Блок процесса обработки (40 секунд) */
+    .process-view {
+      display: none;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .spinner-box {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+    }
+
+    .timer-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    svg.progress-ring {
+      width: 80px;
+      height: 80px;
+      transform: rotate(-90deg);
+    }
+
+    circle.progress-ring__circle {
+      stroke: var(--accent-red);
+      stroke-dasharray: 226;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    .process-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .process-status {
+      font-size: 13px;
+      color: var(--text-sub);
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    /* Блок успеха */
+    .success-view {
+      display: none;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .icon-success {
+      width: 56px;
+      height: 56px;
+      background: rgba(48, 209, 88, 0.1);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+      color: #30d158;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 16px;
+    }
+
+    /* Модалка Paywall (Подписка) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      z-index: 10;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .paywall-card {
+      background: #1c1c1e;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 32px 24px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    .paywall-price {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 16px 0 4px;
+      letter-spacing: -1px;
+    }
+
+    .paywall-price span {
+      font-size: 14px;
+      color: var(--text-sub);
+      font-weight: 400;
+    }
+
+    .features-list {
+      text-align: left;
+      margin: 20px 0 24px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .features-list div {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .features-list span {
+      color: #30d158;
+      font-weight: bold;
+    }
+
+    .btn-pay {
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-pay:hover {
+      background: #e5e5ea;
+    }
+
+    .close-paywall {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: var(--text-sub);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow"></div>
+
+  <div class="container">
+    <div class="header">
+      <!-- <div class="badge">Death site</div> -->
+      <h1>Death Site</h1>
+      <!-- <p class="subtitle">Автономный локальный протокол влияния.</p> -->
+    </div>
+
+    <!-- Вьюпорты интерфейса -->
+    
+    <!-- <!-- 1. Форма ввода -->
+<!-- 1. Форма ввода -->
+<div id="formView">
+  <form id="noteForm" novalidate>
+    <!-- Блок ошибки НАД полем ввода -->
+    <div id="errorMessage" style="display: none; color: var(--accent-red); font-size: 13px; font-weight: 500; margin-bottom: 10px; text-align: left;">
+      Введите имя и фамилию через пробел.
+    </div>
+
+    <div class="input-group">
+      <input 
+        type="text" 
+        id="targetName" 
+        placeholder="Имя и Фамилия" 
+        autocomplete="off"
+      >
+    </div>
+    <button type="submit" class="btn-primary">Применить</button>
+  </form>
+</div>
+    <!-- 2. Таймер и статус -->
+    <div id="processView" class="process-view">
+      <div class="spinner-box">
+        <svg class="progress-ring">
+          <circle class="progress-ring__circle" stroke-width="4" fill="transparent" r="36" cx="40" cy="40"/>
+        </svg>
+        <div id="timer" class="timer-display">40</div>
+      </div>
+      <div id="activeName" class="process-name">Субъект</div>
+      <div class="process-status">Указана стандартная причина. Сердечный приступ.</div>
+      <div class="process-status">С подпиской можно будет указать другую причину.</div>
+
+    </div>
+
+    <!-- 3. Финал -->
+    <div id="successView" class="success-view">
+      <div class="icon-success">✓</div>
+      <h2>Готово</h2>
+      <!-- <p class="subtitle" style="margin-top: 8px;">Данные обработаны в памяти устройства и полностью удалены.</p> -->
+      <button onclick="resetApp()" class="btn-primary" style="margin-top: 24px; background: rgba(255,255,255,0.1);">Повторить</button>
+    </div>
+  </div>
+
+  <!-- 4. Paywall Окно -->
+  <div id="paywallModal" class="modal-overlay">
+    <div class="paywall-card">
+      <button class="close-paywall" onclick="closePaywall()">✕</button>
+      <div class="badge" style="background: rgba(255,215,0,0.1); color: #ffd700; border-color: rgba(215,215,0,0.2);">PRO Access</div>
+      <h2>Лимит исчерпан</h2>
+      <p class="subtitle" style="margin-top: 6px;">Бесплатный тестовый лимит: 1 запись. Оформите подписку для безлимитного доступа.</p>
+
+      <div class="paywall-price">$9.99 <span>/ месяц</span></div>
+
+      <div class="features-list">
+        <div><span>✓</span> Неограниченное число записей</div>
+        <div><span>✓</span> Настройка причины и времени смерти</div>
+        <!-- <div><span>✓</span> Приоритетная обработка на Edge-серверах</div> -->
+      </div>
+
+      <button class="btn-pay" onclick="alert('Ошибка интеграции с банком')">Оформить подписку</button>
+    </div>
+  </div>
+
+  <script>
+    let hasUsedFreeTry = false;
+    const circle = document.querySelector('.progress-ring__circle');
+    const radius = circle.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = 0;
+
+    function setProgress(percent) {
+      const offset = circumference - (percent / 100 * circumference);
+      circle.style.strokeDashoffset = offset;
+    }
+
+    document.getElementById('noteForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  document.getElementById('noteForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const errorElem = document.getElementById('errorMessage');
+  const inputElem = document.getElementById('targetName');
+  const rawValue = inputElem.value.trim();
+
+  // Разбиваем ввод на отдельные слова
+  const words = rawValue.split(/\s+/).filter(word => word.length > 0);
+
+  // Регулярка: только буквы (кириллица, латиница) и дефисы
+  const nameRegex = /^[A-Za-zА-Яа-яЁёІіЎўIıİi\-]+$/;
+
+  // Проверка: минимум 2 слова, каждое от 2 символов и только из букв
+  const isValid = words.length >= 2 && words.every(w => w.length >= 2 && nameRegex.test(w));
+
+  if (!isValid) {
+    // Показываем текст ошибки НАД полем ввода
+    errorElem.style.display = 'block';
+    inputElem.style.borderColor = 'var(--accent-red)';
+    inputElem.focus();
+    return;
+  }
+
+  // Если всё верно — скрываем ошибку
+  errorElem.style.display = 'none';
+  inputElem.style.borderColor = 'var(--border)';
+
+  // Проверка на фейковый Paywall при повторной попытке
+  if (hasUsedFreeTry) {
+    document.getElementById('paywallModal').style.display = 'flex';
+    return;
+  }
+
+  // Форматируем имя с заглавных букв
+  const formattedName = words
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+
+  // Переход к таймеру
+  document.getElementById('formView').style.display = 'none';
+  document.getElementById('processView').style.display = 'block';
+  document.getElementById('activeName').textContent = formattedName;
+
+  let timeLeft = 40;
+  const timerElem = document.getElementById('timer');
+  
+  const interval = setInterval(() => {
+    timeLeft--;
+    timerElem.textContent = timeLeft;
+    
+    const percent = ((40 - timeLeft) / 40) * 100;
+    setProgress(percent);
+
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      hasUsedFreeTry = true;
+      showSuccess();
+    }
+  }, 1000);
+});
+
+// Дополнительно: скрываем ошибку, когда пользователь начинает заново вводить текст
+document.getElementById('targetName').addEventListener('input', function() {
+  document.getElementById('errorMessage').style.display = 'none';
+  this.style.borderColor = 'var(--border)';
+});
+  
+  const errorElem = document.getElementById('errorMessage');
+  const inputElem = document.getElementById('targetName');
+  const rawValue = inputElem.value.trim();
+
+  // Разбиваем строку по пробелам и фильтруем пустые элементы
+  const words = rawValue.split(/\s+/).filter(word => word.length > 0);
+
+  // ПРОВЕРКА: Нужно минимум 2 слова, и каждое слово от 2 букв
+  const isValidName = words.length >= 2 && words.every(word => word.length >= 2);
+
+  if (!isValidName) {
+    errorElem.style.display = 'block';
+    inputElem.style.borderColor = 'var(--accent-red)';
+    inputElem.focus();
+    return;
+  }
+
+  // Если валидация прошла — скрываем ошибку
+  errorElem.style.display = 'none';
+  inputElem.style.borderColor = 'var(--border)';
+
+  // Проверка лимита (Paywall)
+  if (hasUsedFreeTry) {
+    document.getElementById('paywallModal').style.display = 'flex';
+    return;
+  }
+
+  // Форматируем имя (Каждое слово с большой буквы)
+  const formattedName = words
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+
+  // Переключаем на экран процесса
+  document.getElementById('formView').style.display = 'none';
+  document.getElementById('processView').style.display = 'block';
+  document.getElementById('activeName').textContent = formattedName;
+
+  let timeLeft = 40;
+  const timerElem = document.getElementById('timer');
+  
+  const interval = setInterval(() => {
+    timeLeft--;
+    timerElem.textContent = timeLeft;
+    
+    const percent = ((40 - timeLeft) / 40) * 100;
+    setProgress(percent);
+
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      hasUsedFreeTry = true;
+      showSuccess();
+    }
+  }, 1000);
+});
+
+    function showSuccess() {
+      document.getElementById('processView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+    }
+
+    function resetApp() {
+      // Если попытка уже истрачена — сразу выбрасываем платное окно
+      if (hasUsedFreeTry) {
+        document.getElementById('paywallModal').style.display = 'flex';
+        return;
+      }
+      
+      document.getElementById('successView').style.display = 'none';
+      document.getElementById('formView').style.display = 'block';
+      document.getElementById('targetName').value = '';
+    }
+
+    function closePaywall() {
+      document.getElementById('paywallModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
